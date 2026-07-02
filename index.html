@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bomb Almanac</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000000;
+    --bg-panel:#1D2B53;
+    --bg-tile:#111D35;
+    --bg-tile-hover:#17223f;
+    --border:#83769C;
+    --border-dim:#3b3555;
+    --border-lit:#FFA300;
+    --ember:#FF004D;
+    --fuse:#FFEC27;
+    --paper:#FFF1E8;
+    --muted:#83769C;
+    --desc:#C2C3C7;
+    --almanac:#FFCCAA;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--paper);
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+    position:relative;
+  }
+  /* CRT scanlines — just fucking alternating lines */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.35) 0px,
+      rgba(0,0,0,0.35) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    z-index:50;
+    opacity:0.5;
+  }
+
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:22px;
+    padding-bottom:18px;
+    border-bottom:2px solid var(--border-dim);
+  }
+  header h1{
+    font-family:'Press Start 2P', monospace;
+    font-size:22px;
+    letter-spacing:1px;
+    margin:0;
+    color:var(--paper);
+  }
+  header h1 span{color:var(--ember);}
+  header .sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.5px;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns:320px 1fr;
+    gap:22px;
+    align-items:start;
+  }
+
+  /* shared pixel-frame */
+  .pixel-frame{
+    border-radius:0;
+    box-shadow:
+      inset 0 0 0 2px var(--bg),
+      inset 0 0 0 4px var(--border-dim);
+  }
+
+  /* ---- roster ---- */
+  .roster{
+    background:var(--bg-panel);
+    box-shadow:
+      inset 0 0 0 2px var(--bg),
+      inset 0 0 0 4px var(--border-dim);
+    border-radius:0;
+    padding:16px 14px;
+  }
+  .roster-label{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    letter-spacing:1px;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin:2px 4px 12px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    max-height:620px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+  .grid::-webkit-scrollbar{width:8px;}
+  .grid::-webkit-scrollbar-thumb{background:var(--border-dim);}
+  .grid::-webkit-scrollbar-track{background:var(--bg);}
+
+  .tile{
+    position:relative;
+    background:var(--bg-tile);
+    border-radius:0;
+    box-shadow:inset 0 0 0 2px var(--border-dim);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    padding:10px 6px 8px;
+    gap:8px;
+  }
+  .tile:hover{background:var(--bg-tile-hover);}
+  .tile .icon-box{
+    width:56px;height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+  }
+  .tile .icon-box img{
+    max-width:100%;
+    max-height:100%;
+    width:auto;
+    height:auto;
+    object-fit:contain;
+    display:block;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+  }
+  .tile.active{
+    background:var(--bg-tile-hover);
+    box-shadow:inset 0 0 0 2px var(--bg), inset 0 0 0 4px var(--border-lit);
+  }
+  .tile .tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+    text-align:center;
+    line-height:1.2;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
+  }
+  .tile.active .tag{color:var(--fuse);}
+
+  /* ---- detail panel ---- */
+  .panel{
+    background:var(--bg-panel);
+    border-radius:0;
+    box-shadow:
+      inset 0 0 0 2px var(--bg),
+      inset 0 0 0 4px var(--border-dim);
+    padding:32px 36px 34px;
+    min-height:620px;
+  }
+
+  .detail-top{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    margin-bottom:6px;
+  }
+  .big-icon{
+    width:84px;height:84px;
+    background:var(--bg-tile);
+    border-radius:0;
+    box-shadow:inset 0 0 0 2px var(--border-dim);
+    flex:none;
+    padding:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    image-rendering:pixelated;
+  }
+  .big-icon img{
+    width:100%;
+    height:100%;
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain;
+    display:block;
+    image-rendering:pixelated;
+  }
+
+  .titles{flex:1; min-width:0;}
+  .bomb-name{
+    font-family:'Press Start 2P', monospace;
+    font-size:17px;
+    color:var(--fuse);
+    margin:0 0 10px;
+    letter-spacing:0.5px;
+    line-height:1.4;
+  }
+  .bomb-desc{
+    font-size:14px;
+    color:var(--desc);
+    margin:0;
+    line-height:1.5;
+  }
+
+  /* fuse divider — signature element, flat / no glow */
+  .fuse-line{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin:22px 0 24px;
+  }
+  .fuse-line .cord{
+    flex:1;
+    height:2px;
+    background:repeating-linear-gradient(90deg, var(--border-dim) 0 6px, transparent 6px 10px);
+  }
+  .fuse-line .spark{
+    width:8px;height:8px;
+    border-radius:0;
+    background:var(--ember);
+    animation:spark-blink 1s steps(1) infinite;
+    flex:none;
+  }
+  .fuse-line .label{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:10.5px;
+    letter-spacing:1.5px;
+    color:var(--muted);
+    text-transform:uppercase;
+    flex:none;
+  }
+  @keyframes spark-blink{
+    0%,49%{ background:var(--ember); }
+    50%,100%{ background:var(--fuse); }
+  }
+
+  .almanac-box{
+    position:relative;
+    background:var(--bg-tile);
+    box-shadow:inset 0 0 0 2px var(--border-dim);
+    border-left:6px solid var(--ember);
+    border-radius:0;
+    padding:20px 22px;
+  }
+  .almanac-box p{
+    margin:0;
+    color:var(--almanac);
+    line-height:1.7;
+    font-size:14px;
+  }
+  .almanac-box p::before{ content:"> "; color:var(--ember); }
+
+  footer{
+    margin-top:26px;
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    opacity:0.7;
+  }
+
+  @media (max-width: 780px){
+    .layout{grid-template-columns:1fr;}
+    .roster{order:2;}
+    .grid{max-height:none;}
+    .panel{order:1; padding:24px 20px;}
+    header h1{font-size:16px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>THE SUBURBAN <span>BOMB</span> ALMANAC</h1>
+    <div class="sub">SELECT A BOMB TO SEE ITS INFO // CURRENTLY 20 ENTRIES IN TOTAL</div>
+  </header>
+
+  <div class="layout">
+    <div class="roster">
+      <div class="roster-label">Roster</div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>fucking damnit... I love complicating things for myself</footer>
+  <footer>FIVE MINUTE CODING ADVENTURE</footer>
+</div>
+
+<script>
+// Icon filenames — matches your project's icons/<key>.png convention.
+// Confirmed to exist in your project: botto, cluster, cryo, dyna, holy, land,
+// mortar, nana, nega, normal, hole, paper, shroom, sticky, subspace, troll.
+// tnt, molotov, smoke, and bomb don't have art yet, so they map straight to placeholder.
+const ICON_KEYS = {
+  normal:"normal", sticky:"sticky", cluster:"cluster", land:"land", dyna:"dyna",
+  tnt:"placeholder", botto:"botto", subspace:"subspace", cryo:"cryo",
+  molotov:"placeholder", smoke:"placeholder", nega:"nega", nana:"nana",
+  mortar:"mortar", bomb:"placeholder", paper:"paper", hole:"hole",
+  holy:"holy", shroom:"shroom", troll:"troll"
+};
+
+const PLACEHOLDER_SRC = 'icons/placeholder.png';
+
+const BOMBS = [
+  { key:"normal", icon:"normal", name:"The Normal Bomb",
+    desc:"Explodes after a relatively short fuse.",
+    almanac:"Normal Bomb sucks. Nobody likes Normal Bomb. Normal Bomb is rude, loud, inconsiderate, and completely incapable of solving problems without violence. Normal Bomb says he's working on improving himself. He's not." },
+  { key:"sticky", icon:"sticky", name:"The Sticky Bomb",
+    desc:"Sticks to any surface including ground, other bombs or players.",
+    almanac:"Sticky Bomb is a very **** bomb. He ****** to *****. He sticks to ******. He ****** to players. He once ***** himself to ******* ****** ***** for three **** because neither of them ****** to ** **** and ***** first. Sticky Bomb also likes to ****, ******* and sometimes **** himself after *******." },
+  { key:"cluster", icon:"cluster", name:"The Cluster Bomb",
+    desc:"Explodes into clusters that explode on contact.",
+    almanac:"Cluster Bomb believes every explosion should be followed by a smaller explosion. And every smaller explosion should be followed by another smaller explosion. She is not allowed to plan birthday parties anymore." },
+  { key:"land", icon:"land", name:"The Landbomb",
+    desc:"Takes a while to arm, but explodes upon proximity to anything.",
+    almanac:"Some folks say Landbomb is lazy, that she spends most of her time sitting around and doing nothing. Landbomb disagrees. She's simply waiting for the perfect opportunity to make a lasting impression. She has no idea why Bottobomb hates her." },
+  { key:"dyna", icon:"dyna", name:"The Dynabomb",
+    desc:"Big explosion at the cost of a longer fuse.",
+    almanac:"Dynabomb always knew he was destined for greatness. Ever since he was a small lump of clay and nitroglycerbomb, he dreamed of becoming a legendary hero. Ask him about his greatest achievement and he'll gladly tell you. Just give him five seconds." },
+  { key:"tnt", icon:"placeholder", name:"The TNB Block",
+    desc:"Deployable block that can be placed in the terrain to create traps or chain reactions.",
+    almanac:"During the war of the ionic-sonic-nucleonic-tectonic-hydronic-atomic-bomb, TNB Block (Trinitrobombuene) was a real team player. But in his older years, he just wants to blow things up for fun. While his fellow bombardiers knew him as a guy you could count on, at home, TNB is known for bombastic cookies, with extra nitroglycerbomb. TNB Block has crippling post bombotized stress disorder." },
+  { key:"botto", icon:"botto", name:"The Bottobomb",
+    desc:"Chains itself to the ground and chases down unsuspecting players and bombs.",
+    almanac:"Ever since she was little, Bottobomb dreamed of joining the national swim team. Unfortunately, she spent most of her life chained to the ocean floor. By the time she finally got free, she had become extremely good at sinking and developed an unknown hatred for Landbomb." },
+  { key:"subspace", icon:"subspace", name:"The Subspace Tripbomb",
+    desc:"Landmine that becomes invisible after some time. Deals no damage but instead deals heavy knockback.",
+    almanac:"Subspace Tripbomb always wanted to become a famous artist, but after she learned that (unfortunately) she is a bomb, she dropped that dream like a dead fly. Yet she found something better, she's mastered the ability of standing so incredibly still that she's become invisible to the eye. Painting everything pink when she explodes is what she's most passionate about now." },
+  { key:"cryo", icon:"cryo", name:"The Cryobomb",
+    desc:"Freezes players, leaving them vulnerable.",
+    almanac:"Cryobomb insists he's misunderstood. People call him \"cool,\" tell him to \"chill out,\" and constantly ask him to \"stay frosty.\" CryoBomb hates these jokes. Luckily, he knows plenty of ways to leave people \"frozen\" in silence... Oh no... HE'S STARTING TO MAKE THE PUNS TOO!" },
+  { key:"molotov", icon:"placeholder", name:"The Molotov Bombtail",
+    desc:"Creates infinite fire that deals no damage but can detonate bombs instantly.",
+    almanac:"Molotov Bombtail was always arguing with the developers. \"If fire used to kill, why didn't the country prosper?\" he used to ask. \"Need for Synergy\" the developers always answered. Molotov Bombtail wasn't sure about that, so he sneaked into the game's code and changed one single line. Now those \"synergies\" are just forced chain reactions. Molotov Bombtail has no regrets." },
+  { key:"smoke", icon:"placeholder", name:"The Smoke Bomb",
+    desc:"Creates flammable smoke on contact.",
+    almanac:"Smoke Bomb is very shy and introverted, she doesn't like being the center of attention. That's why she carries several cubic meters of smoke everywhere she goes. Unfortunately, setting the smoke on fire tends to attract attention anyway." },
+  { key:"nega", icon:"nega", name:"The Negative Bomb",
+    desc:"Creates terrain instead of destroying.",
+    almanac:"Negative Bomb has never been comfortable with traditional bombin'. While other bombs spend their time destroying things, she prefers building them back up at the point of wanting to study architecture. The fact that this occasionally suffocates people inside solid rock is purely coincidental." },
+  { key:"nana", icon:"nana", name:"The Bombnana",
+    desc:"Bouncy and explosive exotic fruit.",
+    almanac:"Bombnana is a very energetic and unpredictable girl. Once she starts bouncing around, nobody knows where she is gonna go, not even her. She shouldn't be included in any breakfast menu or someone will have an explosive morning." },
+  { key:"mortar", icon:"mortar", name:"The Bomb Mortar",
+    desc:"Toss a bomb into it to load it. It will start shooting them to the furthest player!",
+    almanac:"Bomb Mortar has currently a crush with her target that is three biomes away. \"Sure, the distance is tough,\" she sighs, \"but launching explosive tokens of my affection across the map surely will make them fall for me.\" She is even willing to have a long-range relationship, but her \"tokens of affections\" might just send her crush \"falling\" unconscious to the ground." },
+  { key:"bomb", icon:"placeholder", name:"The B.O.M.B.",
+    desc:"Wanders around, occasionally chasing down enemies. Stomp on it for a surprise!",
+    almanac:"People thought B.O.M.B (Bombastic Offensive Mobile Buddy) was a normal guy, but he's a total creep. Ever since he was a teenager, he has harassed every girl he was interested in. They thought he was put in prison, but now he's here, detonating people, chasing them down, like a creep." },
+  { key:"paper", icon:"paper", name:"The BomberJot",
+    desc:"Homing object that does almost nothing on its own. Attach a bomb to it and let it use it as ammunition.",
+    almanac:"\"Teamwork is key!\" BomberJot always says, inviting other bombs to ride on his paper wings. \"Come, fellow ordnance! Let us write history in the skies and—oh shoot, a player!\" That's why his commercial airline went bankrupt... the accident wasn't your fault, buddy..." },
+  { key:"hole", icon:"hole", name:"The Null Bomb",
+    desc:"Creates a black hole.",
+    almanac:"\"I'm ready!\" shouts Null Bomb. \"Pick me! Pick me! I can do it! I'll help ya! Just gimme a chance!\" Null Bomb usually gets her chance. Not so shortly afterward, everybody becomes pure energy." },
+  { key:"holy", icon:"holy", name:"The Holy Hand Bomb",
+    desc:"Huge explosion after stopping completely.",
+    almanac:"Holy Hand Bomb believes every action in life should be performed with patience, dignity, and proper ceremony. \"You gotta count to three!\" He always insists, although nobody follows that rule. First because they are usually in a hurry. And second, he doesn't even have a pin to pull." },
+  { key:"shroom", icon:"shroom", name:"The Boom-shroom",
+    desc:"You can wipe half of the map with this one!",
+    almanac:"\"You're lucky I'm on your side,\" says Boom-shroom. \"Actually, don't get too comfortable. I don't really do sides.\"" },
+  { key:"troll", icon:"troll", name:"The Troll Bomb",
+    desc:"Rolls towards the nearest player including the owner.",
+    almanac:"From so much rolling, Troll Bomb developed motion sickness, so she never knows which folk she was targeting. Was it that one? The one running over there? This one? The hesitation always gets the better of her, and she almost always ends up blowing up her owner. Troll Bomb has considered buying a GPS, but she's too cheap to do it." }
+];
+
+// Creates an icon <div><img></div> as real DOM nodes (not string-built HTML),
+// so a bad src can never break attribute parsing. On load failure it swaps
+// in the generated placeholder via a real 'error' event listener.
+function makeIconBox(bomb, size){
+  const box = document.createElement('div');
+  box.className = 'icon-box';
+  box.style.width = size + 'px';
+  box.style.height = size + 'px';
+
+  const img = document.createElement('img');
+  img.alt = bomb.name + ' icon';
+  img.src = 'icons/' + ICON_KEYS[bomb.icon] + '.png';
+  img.addEventListener('error', function onErr(){
+    img.removeEventListener('error', onErr);
+    img.src = PLACEHOLDER_SRC;
+  });
+  box.appendChild(img);
+  return box;
+}
+
+const grid = document.getElementById('grid');
+const panel = document.getElementById('panel');
+
+BOMBS.forEach(function(bomb, i){
+  const tile = document.createElement('div');
+  tile.className = 'tile';
+  tile.dataset.index = i;
+
+  const tag = document.createElement('div');
+  tag.className = 'tag';
+  tag.textContent = bomb.name.replace('The ', '');
+
+  tile.appendChild(makeIconBox(bomb, 56));
+  tile.appendChild(tag);
+  tile.addEventListener('click', function(){ selectBomb(i); });
+  grid.appendChild(tile);
+});
+
+function selectBomb(i){
+  const bomb = BOMBS[i];
+  Array.prototype.forEach.call(grid.children, function(t, idx){
+    t.classList.toggle('active', idx === i);
+  });
+
+  panel.innerHTML = '';
+
+  const detailTop = document.createElement('div');
+  detailTop.className = 'detail-top';
+
+  const bigIcon = document.createElement('div');
+  bigIcon.className = 'big-icon';
+  bigIcon.appendChild(makeIconBox(bomb, 84));
+
+  const titles = document.createElement('div');
+  titles.className = 'titles';
+  const nameEl = document.createElement('p');
+  nameEl.className = 'bomb-name';
+  nameEl.textContent = bomb.name;
+  const descEl = document.createElement('p');
+  descEl.className = 'bomb-desc';
+  descEl.textContent = bomb.desc;
+  titles.appendChild(nameEl);
+  titles.appendChild(descEl);
+
+  detailTop.appendChild(bigIcon);
+  detailTop.appendChild(titles);
+
+  const fuseLine = document.createElement('div');
+  fuseLine.className = 'fuse-line';
+  fuseLine.innerHTML = '<span class="label">Entry shit goes here</span><span class="cord"></span><span class="spark"></span>';
+
+  const almanacBox = document.createElement('div');
+  almanacBox.className = 'almanac-box';
+  const almanacP = document.createElement('p');
+  almanacP.textContent = bomb.almanac;
+  almanacBox.appendChild(almanacP);
+
+  panel.appendChild(detailTop);
+  panel.appendChild(fuseLine);
+  panel.appendChild(almanacBox);
+}
+
+selectBomb(0);
+</script>
+</body>
+</html>
