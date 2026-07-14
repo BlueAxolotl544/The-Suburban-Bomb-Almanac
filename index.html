@@ -321,10 +321,10 @@
 // mortar, nana, nega, normal, hole, paper, shroom, sticky, subspace, troll.
 // tnt, molotov, smoke, and bomb don't have art yet, so they map straight to placeholder.
 const ICON_KEYS = {
-  normal:"normal", sticky:"sticky", cluster:"cluster", land:"land", dyna:"dyna",
-  tnt:"placeholder", botto:"botto", subspace:"subspace", cryo:"cryo",
-  molotov:"placeholder", smoke:"placeholder", nega:"nega", nana:"nana",
-  mortar:"mortar", bomb:"placeholder", paper:"paper", hole:"hole",
+  normal:"normal", sticky:"sticky", cluster:"frag", land:"land", dyna:"dyna",
+  tnt:"tnt", botto:"botto", subspace:"subspace", cryo:"cryo",
+  molotov:"molotov", smoke:"smoke", nega:"nega", nana:"nana",
+  mortar:"mortar", bomb:"bomb", paper:"paper", hole:"hole",
   holy:"holy", shroom:"shroom", troll:"troll"
 };
 
@@ -346,7 +346,7 @@ const BOMBS = [
   { key:"dyna", icon:"dyna", name:"The Dynabomb",
     desc:"Big explosion at the cost of a longer fuse.",
     almanac:"Dynabomb always knew he was destined for greatness. Ever since he was a small lump of clay and nitroglycerbomb, he dreamed of becoming a legendary hero. Ask him about his greatest achievement and he'll gladly tell you. Just give him five seconds." },
-  { key:"tnt", icon:"placeholder", name:"The TNB Block",
+  { key:"tnt", icon:"tnt", name:"The TNB Block",
     desc:"Deployable block that can be placed in the terrain to create traps or chain reactions.",
     almanac:"During the war of the ionic-sonic-nucleonic-tectonic-hydronic-atomic-bomb, TNB Block (Trinitrobombuene) was a real team player. But in his older years, he just wants to blow things up for fun. While his fellow bombardiers knew him as a guy you could count on, at home, TNB is known for bombastic cookies, with extra nitroglycerbomb. TNB Block has crippling post bombotized stress disorder." },
   { key:"botto", icon:"botto", name:"The Bottobomb",
@@ -358,10 +358,10 @@ const BOMBS = [
   { key:"cryo", icon:"cryo", name:"The Cryobomb",
     desc:"Freezes players, leaving them vulnerable.",
     almanac:"Cryobomb insists he's misunderstood. People call him \"cool,\" tell him to \"chill out,\" and constantly ask him to \"stay frosty.\" CryoBomb hates these jokes. Luckily, he knows plenty of ways to leave people \"frozen\" in silence... Oh no... HE'S STARTING TO MAKE THE PUNS TOO!" },
-  { key:"molotov", icon:"placeholder", name:"The Molotov Bombtail",
+  { key:"molotov", icon:"molotov", name:"The Molotov Bombtail",
     desc:"Creates infinite fire that deals no damage but can detonate bombs instantly.",
     almanac:"Molotov Bombtail was always arguing with the developers. \"If fire used to kill, why didn't the country prosper?\" he used to ask. \"Need for Synergy\" the developers always answered. Molotov Bombtail wasn't sure about that, so he sneaked into the game's code and changed one single line. Now those \"synergies\" are just forced chain reactions. Molotov Bombtail has no regrets." },
-  { key:"smoke", icon:"placeholder", name:"The Smoke Bomb",
+  { key:"smoke", icon:"smoke", name:"The Smoke Bomb",
     desc:"Creates flammable smoke on contact.",
     almanac:"Smoke Bomb is very shy and introverted, she doesn't like being the center of attention. That's why she carries several cubic meters of smoke everywhere she goes. Unfortunately, setting the smoke on fire tends to attract attention anyway." },
   { key:"nega", icon:"nega", name:"The Negative Bomb",
@@ -373,7 +373,7 @@ const BOMBS = [
   { key:"mortar", icon:"mortar", name:"The Bomb Mortar",
     desc:"Toss a bomb into it to load it. It will start shooting them to the furthest player!",
     almanac:"Bomb Mortar has many feelings for her target that is three biomes away. \"Sure, the distance is tough,\" she sighs, \"but launching explosive tokens of my affection across the map surely will make them fall for me.\" She is even willing to have a long-range relationship, but her \"tokens of affections\" might just send her crush \"falling\" unconscious to the ground." },
-  { key:"bomb", icon:"placeholder", name:"The B.O.M.B.",
+  { key:"bomb", icon:"bomb", name:"The B.O.M.B.",
     desc:"Wanders around, occasionally chasing down enemies. Stomp on it for a surprise!",
     almanac:"People thought B.O.M.B (Bombastic Offensive Mobile Buddy) was a normal guy, but he's a total creep. Ever since he was a teenager, he has harassed every girl he was interested in. They thought he was put in prison, but now he's here, detonating people, chasing them down, like a creep." },
   { key:"paper", icon:"paper", name:"The BomberJot",
